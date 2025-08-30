@@ -9,22 +9,38 @@ public class Selector : MonoBehaviour
 {
     private const int TURN_LIMIT = 5;
 
+    // Buttons
     [field: SerializeField] private GameObject Red { get; set; }
     [field: SerializeField] private GameObject Blue { get; set; }
     [field: SerializeField] private GameObject Green { get; set; }
     [field: SerializeField] private GameObject Yellow { get; set; }
 
+    // Materials
+    [SerializeField] private Material RedHighlight;
+    [SerializeField] private Material BlueHighlight;
+    [SerializeField] private Material GreenHighlight;
+    [SerializeField] private Material YellowHighlight;
+
+    // Sounds
+    [field: SerializeField] private AudioClip RedSound { get; set; }
+    [field: SerializeField] private AudioClip BlueSound { get; set; }
+    [field: SerializeField] private AudioClip GreenSound { get; set; }
+    [field: SerializeField] private AudioClip YellowSound { get; set; }
+
     private Queue<GameObject> colorsSelectedByCPU;
     private Queue<GameObject> colorsSelectedByPlayer;
+
+    private AudioSource audioSource;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        // change this to get objects with the Find method.
-        Red.GetComponent<Clickable>().clickEvent += RedSelected;
-        Blue.GetComponent<Clickable>().clickEvent += BlueSelected;
-        Green.GetComponent<Clickable>().clickEvent += GreenSelected;
-        Yellow.GetComponent<Clickable>().clickEvent += YellowSelected;
+        audioSource = gameObject.GetComponent<AudioSource>();
+
+        Red.GetComponent<Clickable>().clickEvent += ButtonSelected;
+        Blue.GetComponent<Clickable>().clickEvent += ButtonSelected;
+        Green.GetComponent<Clickable>().clickEvent += ButtonSelected;
+        Yellow.GetComponent<Clickable>().clickEvent += ButtonSelected;
 
         colorsSelectedByPlayer = new Queue<GameObject>();
         colorsSelectedByCPU = new Queue<GameObject>();
@@ -64,6 +80,18 @@ public class Selector : MonoBehaviour
         }
     }
 
+    private void PlaySound(GameObject color)
+    {
+        if (color == Red)
+            audioSource.PlayOneShot(RedSound);
+        else if (color == Blue)
+            audioSource.PlayOneShot(BlueSound);
+        else if (color == Green)
+            audioSource.PlayOneShot(GreenSound);
+        else if (color == Yellow)
+            audioSource.PlayOneShot(YellowSound);
+    }
+
     // coroutine to display the colors on the queue to the player to memorize
     IEnumerator DisplayColorsOnQueue()
     {
@@ -71,9 +99,40 @@ public class Selector : MonoBehaviour
 
         foreach (var color in colorsSelectedByCPU)
         {
-            Debug.Log(color.gameObject.name);
-            new WaitForSeconds(1f);
+            var renderer = color.GetComponent<Renderer>();
+            var originalMat = renderer.material;
+
+            renderer.material = GetHighlightMaterial(color);
+            PlaySound(color);
+            yield return new WaitForSeconds(0.5f);
+            renderer.material = originalMat;
+            yield return new WaitForSeconds(0.5f);
         }
+    }
+
+    private IEnumerator HighlightSelected(GameObject color)
+    {
+        var renderer = color.GetComponent<Renderer>();
+        var originalMat = renderer.material;
+
+        renderer.material = GetHighlightMaterial(color);
+        yield return new WaitForSeconds(0.5f);
+        renderer.material = originalMat;
+        yield return new WaitForSeconds(0.5f);
+    }
+
+    private Material GetHighlightMaterial(GameObject color)
+    {
+        var material = color.gameObject.name switch
+        {
+            "Red" => RedHighlight,
+            "Blue" => BlueHighlight,
+            "Green" => GreenHighlight,
+            "Yellow" => YellowHighlight,
+            _ => throw new ArgumentException("This button does not exist")
+        };
+
+        return material;
     }
 
     // select a random color and add it to the queue
@@ -93,31 +152,45 @@ public class Selector : MonoBehaviour
         StartCoroutine(DisplayColorsOnQueue());
     }
 
-    public void RedSelected(string arg)
+    public void ButtonSelected(GameObject sender)
     {
-        colorsSelectedByPlayer.Enqueue(Red);
-    }
-
-    public void BlueSelected(string arg)
-    {
-        colorsSelectedByPlayer.Enqueue(Blue);
-    }
-
-    public void GreenSelected(string arg)
-    {
-        colorsSelectedByPlayer.Enqueue(Green);
-    }
-
-    public void YellowSelected(string arg)
-    {
-        colorsSelectedByPlayer.Enqueue(Yellow);
+        GameObject selected = sender.gameObject.name switch
+        {
+            "Red" => Red,
+            "Blue" => Blue,
+            "Green" => Green,
+            "Yellow" => Yellow,
+            _ => throw new ArgumentException("This button is not valid")
+            // case "Red":
+            //     colorsSelectedByPlayer.Enqueue(Red);
+            //     StartCoroutine(HighlightSelected(Red));
+            //     break;
+            // case "Blue":
+            //     colorsSelectedByPlayer.Enqueue(Blue);
+            //     StartCoroutine(HighlightSelected(Blue));
+            //     break;
+            // case "Green":
+            //     colorsSelectedByPlayer.Enqueue(Green);
+            //     StartCoroutine(HighlightSelected(Green));
+            //     break;
+            // case "Yellow":
+            //     colorsSelectedByPlayer.Enqueue(Yellow);
+            //     StartCoroutine(HighlightSelected(Yellow));
+            //     break;
+            // default:
+            //     throw new ArgumentException("This button is not valid");
+        };
+        
+        colorsSelectedByPlayer.Enqueue(selected);
+        PlaySound(selected);
+        StartCoroutine(HighlightSelected(selected));
     }
 
     private void OnDestroy()
     {
-        Red.GetComponent<Clickable>().clickEvent -= RedSelected;
-        Blue.GetComponent<Clickable>().clickEvent -= BlueSelected;
-        Green.GetComponent<Clickable>().clickEvent -= GreenSelected;
-        Yellow.GetComponent<Clickable>().clickEvent -= YellowSelected;
+        Red.GetComponent<Clickable>().clickEvent -= ButtonSelected;
+        Blue.GetComponent<Clickable>().clickEvent -= ButtonSelected;
+        Green.GetComponent<Clickable>().clickEvent -= ButtonSelected;
+        Yellow.GetComponent<Clickable>().clickEvent -= ButtonSelected;
     }
 }

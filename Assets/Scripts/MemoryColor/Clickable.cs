@@ -3,10 +3,10 @@ using UnityEngine;
 
 public class Clickable : MonoBehaviour
 {
-    public Action<string> clickEvent;
+    public Action<GameObject> clickEvent;
 
     private void OnMouseDown()
     {
-        clickEvent?.Invoke(gameObject.name);
+        clickEvent?.Invoke(gameObject);
     }
 }
