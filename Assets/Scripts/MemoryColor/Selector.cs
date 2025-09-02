@@ -95,6 +95,9 @@ public class Selector : MonoBehaviour
     // coroutine to display the colors on the queue to the player to memorize
     IEnumerator DisplayColorsOnQueue()
     {
+        // disable the collider from buttons
+        DisableButtons();
+
         yield return new WaitForSeconds(2f);
 
         foreach (var color in colorsSelectedByCPU)
@@ -102,12 +105,32 @@ public class Selector : MonoBehaviour
             var renderer = color.GetComponent<Renderer>();
             var originalMat = renderer.material;
 
+            // For some reason I cannot use the HighlightSelected() method here
             renderer.material = GetHighlightMaterial(color);
             PlaySound(color);
             yield return new WaitForSeconds(0.5f);
             renderer.material = originalMat;
             yield return new WaitForSeconds(0.5f);
         }
+
+        // enable the colliders of buttons
+        EnableButtons();
+    }
+
+    private void DisableButtons()
+    {
+        Red.GetComponent<BoxCollider>().enabled = false;
+        Blue.GetComponent<BoxCollider>().enabled = false;
+        Green.GetComponent<BoxCollider>().enabled = false;
+        Yellow.GetComponent<BoxCollider>().enabled = false;
+    }
+
+    private void EnableButtons()
+    {
+        Red.GetComponent<BoxCollider>().enabled = true;
+        Blue.GetComponent<BoxCollider>().enabled = true;
+        Green.GetComponent<BoxCollider>().enabled = true;
+        Yellow.GetComponent<BoxCollider>().enabled = true;
     }
 
     private IEnumerator HighlightSelected(GameObject color)
@@ -161,26 +184,8 @@ public class Selector : MonoBehaviour
             "Green" => Green,
             "Yellow" => Yellow,
             _ => throw new ArgumentException("This button is not valid")
-            // case "Red":
-            //     colorsSelectedByPlayer.Enqueue(Red);
-            //     StartCoroutine(HighlightSelected(Red));
-            //     break;
-            // case "Blue":
-            //     colorsSelectedByPlayer.Enqueue(Blue);
-            //     StartCoroutine(HighlightSelected(Blue));
-            //     break;
-            // case "Green":
-            //     colorsSelectedByPlayer.Enqueue(Green);
-            //     StartCoroutine(HighlightSelected(Green));
-            //     break;
-            // case "Yellow":
-            //     colorsSelectedByPlayer.Enqueue(Yellow);
-            //     StartCoroutine(HighlightSelected(Yellow));
-            //     break;
-            // default:
-            //     throw new ArgumentException("This button is not valid");
         };
-        
+
         colorsSelectedByPlayer.Enqueue(selected);
         PlaySound(selected);
         StartCoroutine(HighlightSelected(selected));
