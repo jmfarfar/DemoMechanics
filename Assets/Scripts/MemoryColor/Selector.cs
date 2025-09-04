@@ -119,18 +119,18 @@ public class Selector : MonoBehaviour
 
     private void DisableButtons()
     {
-        Red.GetComponent<BoxCollider>().enabled = false;
-        Blue.GetComponent<BoxCollider>().enabled = false;
-        Green.GetComponent<BoxCollider>().enabled = false;
-        Yellow.GetComponent<BoxCollider>().enabled = false;
+        Red.GetComponent<MeshCollider>().enabled = false;
+        Blue.GetComponent<MeshCollider>().enabled = false;
+        Green.GetComponent<MeshCollider>().enabled = false;
+        Yellow.GetComponent<MeshCollider>().enabled = false;
     }
 
     private void EnableButtons()
     {
-        Red.GetComponent<BoxCollider>().enabled = true;
-        Blue.GetComponent<BoxCollider>().enabled = true;
-        Green.GetComponent<BoxCollider>().enabled = true;
-        Yellow.GetComponent<BoxCollider>().enabled = true;
+        Red.GetComponent<MeshCollider>().enabled = true;
+        Blue.GetComponent<MeshCollider>().enabled = true;
+        Green.GetComponent<MeshCollider>().enabled = true;
+        Yellow.GetComponent<MeshCollider>().enabled = true;
     }
 
     private IEnumerator HighlightSelected(GameObject color)
