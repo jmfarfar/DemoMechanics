@@ -9,13 +9,23 @@ public class Selector : MonoBehaviour
 {
     private const int TURN_LIMIT = 5;
 
+    private readonly string[] correctAns = { "Good!", "Marvelous!", "Fantastic!", "Excellent!", "Great!", "Awesome!" };
+    private readonly string[] incorrectAns = { "Oww!", "Fail!", "Wrong!", "Are you even trying!?" };
+
+
     // Buttons
     [field: SerializeField] private GameObject Red { get; set; }
     [field: SerializeField] private GameObject Blue { get; set; }
     [field: SerializeField] private GameObject Green { get; set; }
     [field: SerializeField] private GameObject Yellow { get; set; }
 
-    // Materials
+    // Base Materials
+    [SerializeField] private Material RedBase;
+    [SerializeField] private Material BlueBase;
+    [SerializeField] private Material GreenBase;
+    [SerializeField] private Material YellowBase;
+
+    // Highlighted Materials
     [SerializeField] private Material RedHighlight;
     [SerializeField] private Material BlueHighlight;
     [SerializeField] private Material GreenHighlight;
@@ -103,13 +113,13 @@ public class Selector : MonoBehaviour
         foreach (var color in colorsSelectedByCPU)
         {
             var renderer = color.GetComponent<Renderer>();
-            var originalMat = renderer.material;
+            // var originalMat = renderer.material;
 
             // For some reason I cannot use the HighlightSelected() method here
             renderer.material = GetHighlightMaterial(color);
             PlaySound(color);
             yield return new WaitForSeconds(0.5f);
-            renderer.material = originalMat;
+            renderer.material = GetBaseMaterial(color);
             yield return new WaitForSeconds(0.5f);
         }
 
@@ -136,11 +146,11 @@ public class Selector : MonoBehaviour
     private IEnumerator HighlightSelected(GameObject color)
     {
         var renderer = color.GetComponent<Renderer>();
-        var originalMat = renderer.material;
+        // var originalMat = renderer.material;
 
         renderer.material = GetHighlightMaterial(color);
         yield return new WaitForSeconds(0.5f);
-        renderer.material = originalMat;
+        renderer.material = GetBaseMaterial(color);
         yield return new WaitForSeconds(0.5f);
     }
 
@@ -152,6 +162,20 @@ public class Selector : MonoBehaviour
             "Blue" => BlueHighlight,
             "Green" => GreenHighlight,
             "Yellow" => YellowHighlight,
+            _ => throw new ArgumentException("This button does not exist")
+        };
+
+        return material;
+    }
+
+    private Material GetBaseMaterial(GameObject color)
+    {
+        var material = color.gameObject.name switch
+        {
+            "Red" => RedBase,
+            "Blue" => BlueBase,
+            "Green" => GreenBase,
+            "Yellow" => YellowBase,
             _ => throw new ArgumentException("This button does not exist")
         };
 
