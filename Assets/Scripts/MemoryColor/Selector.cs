@@ -4,6 +4,8 @@ using System;
 using System.Collections;
 using System.Linq;
 using System.Security.Cryptography;
+using TMPro;
+using Random = UnityEngine.Random;
 
 public class Selector : MonoBehaviour
 {
@@ -37,6 +39,9 @@ public class Selector : MonoBehaviour
     [field: SerializeField] private AudioClip GreenSound { get; set; }
     [field: SerializeField] private AudioClip YellowSound { get; set; }
 
+    // Feedback messages
+    [SerializeField] private TextMeshProUGUI message;
+
     private Queue<GameObject> colorsSelectedByCPU;
     private Queue<GameObject> colorsSelectedByPlayer;
 
@@ -69,12 +74,14 @@ public class Selector : MonoBehaviour
                 {
                     // win
                     Debug.Log("Good!");
+                    StartCoroutine(DisplayGoodMessage());
                     colorsSelectedByPlayer.Clear(); // remove all selections from player
                     SelectRandomColor(); // add a new color in the queue
                 }
                 else
                 {
                     Debug.Log("Fail! Better luck next time!");
+                    StartCoroutine(DisplayWrongMessage());
                     colorsSelectedByPlayer.Clear();
                     colorsSelectedByCPU.Clear();
                     SelectRandomColor();
@@ -84,10 +91,25 @@ public class Selector : MonoBehaviour
         else
         {
             Debug.Log("You have beaten the game");
+            StartCoroutine(DisplayGoodMessage());
             colorsSelectedByPlayer.Clear();
             colorsSelectedByCPU.Clear();
             SelectRandomColor();
         }
+    }
+
+    private IEnumerator DisplayWrongMessage()
+    {
+        message.SetText(incorrectAns[Random.Range(0, incorrectAns.Length)]);
+        yield return new WaitForSeconds(1f);
+        message.SetText(string.Empty);
+    }
+
+    private IEnumerator DisplayGoodMessage()
+    {
+        message.SetText(correctAns[Random.Range(0, correctAns.Length)]);
+        yield return new WaitForSeconds(1f);
+        message.SetText(string.Empty);
     }
 
     private void PlaySound(GameObject color)
