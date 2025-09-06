@@ -43,6 +43,7 @@ public class Selector : MonoBehaviour
     [SerializeField] private TextMeshProUGUI message;
 
     private Queue<GameObject> colorsSelectedByCPU;
+    private Queue<GameObject> bkp_colorsSelectedByCPU;
     private Queue<GameObject> colorsSelectedByPlayer;
 
     private AudioSource audioSource;
@@ -59,43 +60,9 @@ public class Selector : MonoBehaviour
 
         colorsSelectedByPlayer = new Queue<GameObject>();
         colorsSelectedByCPU = new Queue<GameObject>();
+        bkp_colorsSelectedByCPU = new Queue<GameObject>();
 
         SelectRandomColor();
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        if (colorsSelectedByCPU.Count <= TURN_LIMIT)
-        {
-            if (colorsSelectedByPlayer.Count.Equals(colorsSelectedByCPU.Count))
-            {
-                if (colorsSelectedByPlayer.SequenceEqual(colorsSelectedByCPU))
-                {
-                    // win
-                    Debug.Log("Good!");
-                    StartCoroutine(DisplayGoodMessage());
-                    colorsSelectedByPlayer.Clear(); // remove all selections from player
-                    SelectRandomColor(); // add a new color in the queue
-                }
-                else
-                {
-                    Debug.Log("Fail! Better luck next time!");
-                    StartCoroutine(DisplayWrongMessage());
-                    colorsSelectedByPlayer.Clear();
-                    colorsSelectedByCPU.Clear();
-                    SelectRandomColor();
-                }
-            }
-        }
-        else
-        {
-            Debug.Log("You have beaten the game");
-            StartCoroutine(DisplayGoodMessage());
-            colorsSelectedByPlayer.Clear();
-            colorsSelectedByCPU.Clear();
-            SelectRandomColor();
-        }
     }
 
     private IEnumerator DisplayWrongMessage()
@@ -217,24 +184,55 @@ public class Selector : MonoBehaviour
         };
 
         colorsSelectedByCPU.Enqueue(color);
+        bkp_colorsSelectedByCPU.Enqueue(color);
 
         StartCoroutine(DisplayColorsOnQueue());
     }
 
     public void ButtonSelected(GameObject sender)
     {
-        GameObject selected = sender.gameObject.name switch
-        {
-            "Red" => Red,
-            "Blue" => Blue,
-            "Green" => Green,
-            "Yellow" => Yellow,
-            _ => throw new ArgumentException("This button is not valid")
-        };
+        colorsSelectedByPlayer.Enqueue(sender);
+        PlaySound(sender);
+        StartCoroutine(HighlightSelected(sender));
 
-        colorsSelectedByPlayer.Enqueue(selected);
-        PlaySound(selected);
-        StartCoroutine(HighlightSelected(selected));
+        // here we may verify if the button selected is the next on the queue from the CPU
+        if (sender == colorsSelectedByCPU.Dequeue())
+        {
+            // every selection was correct
+            if (colorsSelectedByCPU.Count <= 0)
+            {
+                // check if we have reached the limit of turns in the game
+                if (bkp_colorsSelectedByCPU.Count >= TURN_LIMIT)
+                {
+                    Debug.Log("You have beaten the game");
+                    StartCoroutine(DisplayGoodMessage());
+                    colorsSelectedByPlayer.Clear();
+                    colorsSelectedByCPU.Clear();
+                    bkp_colorsSelectedByCPU.Clear();
+                    SelectRandomColor();
+                }
+                // just display a good message and continue with the game
+                else
+                {
+                    // win, there are no more elements on the queue and all matched with the player's selection
+                    Debug.Log("Good!");
+                    StartCoroutine(DisplayGoodMessage());
+                    colorsSelectedByPlayer.Clear(); // remove all selections from player
+                    colorsSelectedByCPU = new Queue<GameObject>(bkp_colorsSelectedByCPU);
+                    SelectRandomColor(); // add a new color in the queue
+                }
+            }
+        }
+        else
+        {
+            // lose, a player's selection didnt match the next element on the queue
+            Debug.Log("Fail! Better luck next time!");
+            StartCoroutine(DisplayWrongMessage());
+            colorsSelectedByPlayer.Clear();
+            colorsSelectedByCPU.Clear();
+            bkp_colorsSelectedByCPU.Clear();
+            SelectRandomColor();
+        }
     }
 
     private void OnDestroy()
